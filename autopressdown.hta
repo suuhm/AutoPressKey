@@ -1,0 +1,189 @@
+<head>
+<title>AutoPressKeyVBS.v0.1</title>
+<HTA:APPLICATION
+        APPLICATIONNAME="apk-vbs"
+        SCROLL="no"
+        SINGLEINSTANCE="yes"
+        WINDOWSTATE="normal"
+        SysMenu ="Yes"
+>
+
+<script language="VBScript">
+
+Window.ResizeTo 777, 666
+
+Sub o1
+	Rem VBS Script Press Keys X secs MIL
+	' Version 1.0 - (c) 2021 suuhm
+	' SENDKEYS INFO:
+	' https://ss64.com/vb/sendkeys.html
+
+	Dim Message, intVal, MyValue, Title, Default, objResult
+	' Dim intVal, * as Integer
+
+	Message = "SendKey interval?"
+	Title = "Input the seconds of sendkey interval here..."
+	Default = "For Example: 60 secs for every minute keydown or NP (Notepad focusscript)"
+
+	' Display message, title, and default value.
+	MyValue = InputBox(Message, Title, Default)
+	' MyValue = InputBox(Message, Title, , , , "DEMO.HLP", 10)
+	' MyValue = InputBox(Message, Title, Default, 100, 100)
+
+	VT = VarType(MyValue)
+	   If IsNumeric(MyValue) Then 
+	   VT = 2
+	End If
+	' https://docs.microsoft.com/en-us/previous-versions/visualstudio/aa263402(v=vs.60)?redirectedfrom=MSDN
+	' Int -> 2 // Str -> 8
+
+	MsgBox "Your TYPE-INPUT VALUE is: " + CStr(VT), vbError, "Now Starting Script..."
+
+	If VT = 8 And MyValue <> "NP" Then
+	   MsgBox "WRONG INPUT INT OR NP!!", vbWarning, "Stopping Script..."
+	   Quit 0
+
+	Elseif VT <> 2 And MyValue = "NP" Then
+	   MsgBox "RUNNING NOTEPAD>>", vbError, "Starting and write some stuff in notepad..."
+	   Set objShell = CreateObject("WScript.Shell")    
+	   Call objShell.Run("%windir%\system32\notepad.exe")
+	   objShell.AppActivate("Notepad") 'Fokus NP
+	   sleep (5000) ' 5 secs
+
+	   For i=1 To 7 Step 1
+	     ' ### TESTING OPEN NP AND SEND HELLO
+	     objResult = objShell.sendkeys("LET ME PRESS A KEY FOR YOU >> Nr. " + CStr(i) + ": {ENTER}")
+	     sleep (2000) ' 2 Sekunden
+	   Next
+
+	Elseif CInt(MyValue) >= 1 Then
+
+	   intVal = CInt(MyValue)*1000 ' Millisecs to secs to mins *60
+	   intTimer = 0
+	   i2 = intVal
+	   MsgBox "Input: " + CStr(intVal) + " milliseconds! (" + CStr(intVal/1000/60) + ") minutes" , vbInformation, "Starting Script and minimize..."
+
+	   Set objShell = CreateObject("WScript.Shell")  
+	   
+	   ' Minimize window
+	   sleep 333
+	   objShell.SendKeys "% n"
+
+	   sleep 2000
+	   Do While True
+	     objResult = objShell.sendkeys("{NUMLOCK}{NUMLOCK}")
+	     ' MsgBox "Script laeuft seit: " + CStr(intTimer) + " Millisecs", vbWarning, "Stopping Script..."
+	     ' intTimer = intTimer + intVal
+	     sleep i2
+	     ' window.setTimeOut "o1", intVal
+	   Loop
+
+	Else ' MyValue < 1
+	  MsgBox "WRONG INPUT PLS ENTER SECONDS OR NP!!", vbWarning, "Stopping Script..."
+	  Quit 0
+	End If
+End Sub
+
+Sub oexit
+   	  MsgBox "THX AND BYE :)", vbWarning, "Stopping Script..."
+	  window.close()
+End Sub
+
+' Helper Functions
+Sub sleep (Timesec)
+   Set objwsh = CreateObject("WScript.Shell") 
+   Timesec2 = Timesec / 1000
+   objwsh.Run "Timeout /T " & Timesec2 & " /nobreak" ,0 ,true
+   Set objwsh = Nothing
+End Sub
+
+Sub get_pid 
+   p_name = "mshta.exe" 
+   'p_name = "Calculator.exe"
+   Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
+
+   Set colItems = objWMIService.ExecQuery("Select * From Win32_Process where name='" & p_name & "'")
+   'msgbox colitems
+   For Each objItem in colItems
+	    ' msgbox objItem.name & " " & objItem.ProcessID & " " & objItem.CommandLine
+	    getproc.value = objItem.name & " " & objItem.ProcessID
+	    ' If objItem.name = "Calculator.exe" then objItem.terminate
+   Next
+
+	'getspan.innerText = getproc.value
+	get_pcinfo
+
+End Sub
+
+Sub get_pcinfo
+   Dim strInfo, ip_addr
+   strInfo = ""
+   ip_addr = ""
+
+   Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
+
+   ' Get IPAddress ipv4
+   qry = "SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = True"
+
+   For Each nic In objWMIService.ExecQuery(qry)
+     For Each addr In nic.IPAddress
+       ip_addr = ip_addr + addr
+     Next
+   Next
+
+   Set colSettings = objWMIService.ExecQuery("Select * from Win32_OperatingSystem")
+
+   For Each objOperatingSystem in colSettings
+      strInfo = vbcrlf & " > " & "OS Name: " & objOperatingSystem.Name
+      strInfo = strInfo + vbcrlf & " > " & "IP Adresse: " & " IPv4 (" & ip_addr & ")"
+      strInfo = strInfo + vbcrlf & " > " & "Version: " & objOperatingSystem.Version
+      strInfo = strInfo + vbcrlf & " > " & "Service Pack: " & objOperatingSystem.ServicePackMajorVersion & "." & objOperatingSystem.      ServicePackMinorVersion
+      strInfo = strInfo + vbcrlf & " > " & "OS Manufacturer: " & objOperatingSystem.Manufacturer
+      strInfo = strInfo + vbcrlf & " > " & "Windows Directory: " & objOperatingSystem.WindowsDirectory
+      strInfo = strInfo + vbcrlf & " > " & "Locale: " & objOperatingSystem.Locale
+      strInfo = strInfo + vbcrlf & " > " & "Available Physical Memory: " & _
+      objOperatingSystem.FreePhysicalMemory
+      strInfo = strInfo + vbcrlf & " > " & "Total Virtual Memory: " & objOperatingSystem.TotalVirtualMemorySize
+      strInfo = strInfo + vbcrlf & " > " & "Available Virtual Memory: " & objOperatingSystem.FreeVirtualMemory
+      strInfo = strInfo + vbcrlf & " > " & "Size stored in paging files: " & _
+      objOperatingSystem.SizeStoredInPagingFiles
+   Next
+
+   getspan.innerText = strInfo
+
+End Sub
+
+</script>
+
+</head>
+
+<body bgcolor="#222222" onload="get_pid">
+
+	<br>
+	<font face="Verdana" size="3" color="#efefef">
+		<b><h2>AutoPressKeyVBS v0.1 beta (c) 2021 suuhm</h2></b>
+
+		<p>
+			<p>
+				<b>PC Infos:</b><br/> 
+				<span id="getspan"></span>
+			</p>
+			<p>
+				<b>Process id is:</b>
+				<input type="text" name="getproc" size="42">
+			</p>
+		</p>
+	</font>
+	
+	<br/>
+	<center>
+		<p>
+			<input type="button" value="Start NUMLOCK spoofer" name="run_button" style="font-size:15pt;width:240px; height:100px" onClick="o1">
+		</p>
+		<p>
+			<input type="button" value="Exit Program" name="run_button"  onClick="oexit">
+		</p>
+	</center>
+	<br/>
+
+</body>
